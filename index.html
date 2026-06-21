@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal WebOS - Wasm Linux Boot</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" />
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: monospace; }
+        #terminal { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+
+    <div id="terminal"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <script src="https://copy.sh/v86/build/v86control.js"></script>
+    
+    <script>
+        // 1. ターミナルの初期化
+        const term = new Terminal({
+            cursorBlink: true,
+            theme: { background: '#000000' }
+        });
+        term.open(document.getElementById('terminal'));
+        term.writeln("Initializing Minimal WebOS Execution Core...");
+        term.writeln("Fetching Linux Kernel & Rootfs (initramfs)...");
+
+        // 2. v86 Wasm エミュレータの起動
+        // copy.sh がテスト用に提供している極小(約5MB)のAlpine Linuxイメージをシームレスにフェッチ
+        const emulator = new V86Starter({
+            wasm_path: "https://copy.sh/v86/build/v86.wasm",
+            memory_size: 64 * 1024 * 1024, // 最小限の64MB RAM空間
+            arguments: [
+                "rw",
+                "console=ttyS0",
+                "loglevel=3"
+            ],
+            // シリアルポート入出力を xterm.js と直結（0msバイパス）
+            serial_container_xterm: term,
+            bzimage: { url: "https://copy.sh/v86/images/images/alpine-bzImage.bin" },
+            initrd: { url: "https://copy.sh/v86/images/images/alpine-initrd.img" },
+            autostart: true
+        });
+
+        term.writeln("Booting Linux OS via WebAssembly...");
+    </script>
+</body>
+</html>
